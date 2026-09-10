@@ -6,7 +6,6 @@ import plotly.express as px
 st.set_page_config(page_title="Gestione Turni Irrigui", layout="wide")
 st.title("🌊 Consorzio Navarolo: Gestione Turni Irrigui")
 
-# --- Dati Iniziali ---
 def get_initial_data():
     return pd.DataFrame([
         {"Gruppo": 1, "Utenza": "Corte Emilia", "Durata_Ore": 24.0, "Portata_ls": 120},
@@ -14,13 +13,14 @@ def get_initial_data():
         {"Gruppo": 2, "Utenza": "Cividale Nord A", "Durata_Ore": 48.0, "Portata_ls": 100},
         {"Gruppo": 2, "Utenza": "Cividale Nord Vecchia", "Durata_Ore": 12.0, "Portata_ls": 70},
         {"Gruppo": 3, "Utenza": "OSSOLA 2 RID", "Durata_Ore": 12.0, "Portata_ls": 80},
+        {"Gruppo": 3, "Utenza": "MANZOGLIO RID", "Durata_Ore": 36.0, "Portata_ls": 150},
         {"Gruppo": 4, "Utenza": "BREDA 3", "Durata_Ore": 12.0, "Portata_ls": 50},
+        {"Gruppo": 4, "Utenza": "BREDA 4", "Durata_Ore": 12.0, "Portata_ls": 40},
     ])
 
 if 'df_canali' not in st.session_state:
     st.session_state.df_canali = get_initial_data()
 
-# --- Menu Laterale ---
 st.sidebar.header("⚙️ Impostazioni")
 d_inizio = st.sidebar.date_input("Data Inizio:", datetime(2026, 4, 1).date())
 t_inizio = st.sidebar.time_input("Ora Inizio:", datetime(2026, 4, 1, 8, 0).time())
@@ -34,7 +34,6 @@ if st.sidebar.button("♻️ Ripristina Dati Iniziali"):
     st.session_state.df_canali = get_initial_data()
     st.rerun()
 
-# --- Tabella Interattiva ---
 st.subheader("📝 Tabellone Canali (Modificabile)")
 edited_df = st.data_editor(
     st.session_state.df_canali,
@@ -44,7 +43,6 @@ edited_df = st.data_editor(
 )
 st.session_state.df_canali = edited_df
 
-# --- Calcolo Turnazione (Ciclico) ---
 turni = []
 if not edited_df.empty and 'Gruppo' in edited_df.columns:
     df_valid = edited_df.dropna(subset=['Gruppo', 'Durata_Ore']).copy()
@@ -73,12 +71,10 @@ if not edited_df.empty and 'Gruppo' in edited_df.columns:
                             "Portata (l/s)": row.get('Portata_ls', 0)
                         })
                     corrente = fine_turno
-                # Il ciclo riparte dopo X giorni
                 inizio_ciclo += timedelta(days=ciclo_giorni)
 
 df_risultato = pd.DataFrame(turni)
 
-# --- Visualizzazione ---
 st.markdown("---")
 if not df_risultato.empty:
     st.subheader("📊 Grafico Gantt")
