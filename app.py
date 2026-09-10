@@ -77,11 +77,33 @@ df_risultato = pd.DataFrame(turni)
 
 st.markdown("---")
 if not df_risultato.empty:
-    st.subheader("📊 Grafico Gantt")
-    fig = px.timeline(df_risultato, x_start="Inizio", x_end="Fine", y="Utenza", color="Gruppo")
-    fig.update_yaxes(autorange="reversed")
-    fig.update_layout(height=max(400, len(edited_df['Utenza'].unique()) * 30))
+        st.subheader("📊 Grafico Gantt (Usa la barra in basso per zoomare sui giorni)")
+    
+    # Creazione grafico con formattazione migliore per il passaggio del mouse
+    fig = px.timeline(
+        df_risultato, 
+        x_start="Inizio", 
+        x_end="Fine", 
+        y="Utenza", 
+        color="Gruppo",
+        hover_data={"Gruppo": True, "Inizio": "|%d/%m %H:%M", "Fine": "|%d/%m %H:%M"}
+    )
+    
+    fig.update_yaxes(autorange="reversed", title_text="")
+    
+    # Aggiunta dello Slider per lo zoom e aumento dell'altezza per dare respiro
+    fig.update_layout(
+        height=max(550, len(edited_df['Utenza'].unique()) * 35),
+        xaxis=dict(
+            title="",
+            rangeslider=dict(visible=True), # Questa riga attiva la barra di zoom magica!
+            type="date"
+        ),
+        legend_title="Gruppi",
+        margin=dict(t=30, b=20, l=10, r=10)
+    )
     st.plotly_chart(fig, use_container_width=True)
+
 
     st.subheader("📅 Tabella Orari")
     df_show = df_risultato.copy()
