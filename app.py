@@ -6,6 +6,7 @@ import plotly.express as px
 st.set_page_config(page_title="Gestione Turni Irrigui", layout="wide")
 st.title("🌊 Consorzio Navarolo: Gestione Turni Irrigui")
 
+# --- Dati Iniziali ---
 def get_initial_data():
     return pd.DataFrame([
         {"Gruppo": 1, "Utenza": "Corte Emilia", "Durata_Ore": 24.0, "Portata_ls": 120},
@@ -21,6 +22,7 @@ def get_initial_data():
 if 'df_canali' not in st.session_state:
     st.session_state.df_canali = get_initial_data()
 
+# --- Menu Laterale ---
 st.sidebar.header("⚙️ Impostazioni")
 d_inizio = st.sidebar.date_input("Data Inizio:", datetime(2026, 4, 1).date())
 t_inizio = st.sidebar.time_input("Ora Inizio:", datetime(2026, 4, 1, 8, 0).time())
@@ -34,6 +36,7 @@ if st.sidebar.button("♻️ Ripristina Dati Iniziali"):
     st.session_state.df_canali = get_initial_data()
     st.rerun()
 
+# --- Tabella Interattiva ---
 st.subheader("📝 Tabellone Canali (Modificabile)")
 edited_df = st.data_editor(
     st.session_state.df_canali,
@@ -43,6 +46,7 @@ edited_df = st.data_editor(
 )
 st.session_state.df_canali = edited_df
 
+# --- Calcolo Turnazione (Ciclico) ---
 turni = []
 if not edited_df.empty and 'Gruppo' in edited_df.columns:
     df_valid = edited_df.dropna(subset=['Gruppo', 'Durata_Ore']).copy()
@@ -75,11 +79,11 @@ if not edited_df.empty and 'Gruppo' in edited_df.columns:
 
 df_risultato = pd.DataFrame(turni)
 
+# --- Visualizzazione ---
 st.markdown("---")
 if not df_risultato.empty:
-        st.subheader("📊 Grafico Gantt (Usa la barra in basso per zoomare sui giorni)")
+    st.subheader("📊 Grafico Gantt (Usa la barra in basso per zoomare)")
     
-    # Creazione grafico con formattazione migliore per il passaggio del mouse
     fig = px.timeline(
         df_risultato, 
         x_start="Inizio", 
@@ -91,19 +95,17 @@ if not df_risultato.empty:
     
     fig.update_yaxes(autorange="reversed", title_text="")
     
-    # Aggiunta dello Slider per lo zoom e aumento dell'altezza per dare respiro
     fig.update_layout(
         height=max(550, len(edited_df['Utenza'].unique()) * 35),
         xaxis=dict(
             title="",
-            rangeslider=dict(visible=True), # Questa riga attiva la barra di zoom magica!
+            rangeslider=dict(visible=True),
             type="date"
         ),
         legend_title="Gruppi",
         margin=dict(t=30, b=20, l=10, r=10)
     )
     st.plotly_chart(fig, use_container_width=True)
-
 
     st.subheader("📅 Tabella Orari")
     df_show = df_risultato.copy()
