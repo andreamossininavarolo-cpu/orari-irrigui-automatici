@@ -13,10 +13,6 @@ st.markdown("""
         margin-bottom: 0px !important;
         padding-bottom: 0px !important;
     }
-    /* Riduci spazio sopra il programma del giorno */
-    [data-testid="stVerticalBlock"] .st-emotion-cache-1jicfl2 {
-        padding-top: 0.5rem !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,19 +73,21 @@ st.markdown("---")
 if not df_risultato.empty:
     st.subheader("📅 Programma del Giorno")
 
-    # Pulsanti di navigazione su una riga
+    # --- SINTASSI CORRETTA PER I PULSANTI IN COLONNA ---
     col1, col2, col3 = st.columns(3)
-    if col1.button("⬅️ IERI", use_container_width=True):
-        st.session_state.data_selezionata -= timedelta(days=1)
-        st.rerun()
-    if col2.button("🗓️ OGGI", use_container_width=True):
-        st.session_state.data_selezionata = datetime.now().date()
-        st.rerun()
-    if col3.button("DOMANI ➡️", use_container_width=True):
-        st.session_state.data_selezionata += timedelta(days=1)
-        st.rerun()
+    with col1:
+        if st.button("⬅️ IERI", use_container_width=True):
+            st.session_state.data_selezionata -= timedelta(days=1)
+            st.rerun()
+    with col2:
+        if st.button("🗓️ OGGI", use_container_width=True):
+            st.session_state.data_selezionata = datetime.now().date()
+            st.rerun()
+    with col3:
+        if st.button("DOMANI ➡️", use_container_width=True):
+            st.session_state.data_selezionata += timedelta(days=1)
+            st.rerun()
 
-    # Calendario per data specifica
     giorno_selezionato = st.date_input("O vai a una data specifica:", value=st.session_state.data_selezionata, format="DD/MM/YYYY", label_visibility="collapsed")
     if giorno_selezionato != st.session_state.data_selezionata:
         st.session_state.data_selezionata = giorno_selezionato
@@ -114,4 +112,3 @@ if not df_risultato.empty:
             """, unsafe_allow_html=True)
 else:
     st.warning("Dati non sufficienti per il calcolo. Controlla le impostazioni.")
-
