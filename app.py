@@ -79,18 +79,25 @@ st.markdown("---")
 if not df_risultato.empty:
     st.subheader("📊 Grafico Gantt (Usa la barra in basso per zoomare)")
     
+    # Creazione etichetta con orari da inserire nella barra
+    df_risultato['Etichetta'] = pd.to_datetime(df_risultato['Inizio']).dt.strftime('%d/%m %H:%M') + " ➔ " + pd.to_datetime(df_risultato['Fine']).dt.strftime('%d/%m %H:%M')
+    
     fig = px.timeline(
         df_risultato, 
         x_start="Inizio", 
         x_end="Fine", 
         y="Utenza", 
         color="Gruppo",
-        hover_data={"Gruppo": True, "Inizio": "|%d/%m %H:%M", "Fine": "|%d/%m %H:%M"}
+        text="Etichetta",
+        hover_data={"Gruppo": True, "Inizio": "|%d/%m %H:%M", "Fine": "|%d/%m %H:%M", "Etichetta": False}
     )
+    
+    # Imposta barre più sottili (width) e testo all'interno
+    fig.update_traces(width=0.4, textposition='inside', insidetextfont=dict(size=12))
     
     fig.update_yaxes(autorange="reversed", title_text="")
     
-    # Linee verticali e barra zoom (tutto configurato qui in un blocco unico)
+    # Linee verticali e barra zoom attivata
     fig.update_xaxes(
         showgrid=True, 
         gridwidth=1, 
@@ -100,8 +107,10 @@ if not df_risultato.empty:
         type="date"
     )
     
+    # Altezza compatta per ridurre lo scorrimento sul cellulare (*25 invece di *35)
+    altezza_grafico = max(400, len(edited_df['Utenza'].unique()) * 25)
     fig.update_layout(
-        height=max(550, len(edited_df['Utenza'].unique()) * 35),
+        height=altezza_grafico,
         xaxis_title="",
         legend_title="Gruppi",
         margin=dict(t=30, b=20, l=10, r=10)
