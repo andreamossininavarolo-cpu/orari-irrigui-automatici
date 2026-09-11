@@ -8,58 +8,33 @@ st.title("🌊 Turni Irrigui Storti")
 # --- Dati Iniziali Estratti dal File Ufficiale PARTENZE 2026.xlsx ---
 def get_initial_data():
     """
-    Questa funzione contiene l'esatto elenco e le durate delle competenze
-    estratte dal file PARTENZE 2026.xlsx.
-    L'ordine numerico è fondamentale per la sequenza a cascata.
+    Questa funzione contiene l'esatto elenco, le durate e le date/ore di partenza
+    della prima ruota, estratte dal file PARTENZE 2026.xlsx.
     """
     return pd.DataFrame([
-        {"Ordine": 1, "Canale": "Corte Emilia", "Ore": 50.0},
-        {"Ordine": 2, "Canale": "Pirolo", "Ore": 50.0},
-        {"Ordine": 3, "Canale": "Pirolo Rid.", "Ore": 0.0}, # Durata 0, verrà saltato
-        {"Ordine": 4, "Canale": "Cà Lame", "Ore": 34.0},
-        {"Ordine": 5, "Canale": "Madonna Lame", "Ore": 213.0},
-        {"Ordine": 6, "Canale": "Madonna Lame ridotta", "Ore": 72.0},
-        {"Ordine": 7, "Canale": "Cividale Nord A", "Ore": 99.0},
-        {"Ordine": 8, "Canale": "Belvedere Nord", "Ore": 41.0},
-        {"Ordine": 9, "Canale": "Belvedere Nord rid", "Ore": 150.0},
-        {"Ordine": 10, "Canale": "Cividale Nord vecchia rid.", "Ore": 50.0},
-        {"Ordine": 11, "Canale": "Cividale Nord vecchia", "Ore": 81.0},
-        {"Ordine": 12, "Canale": "Cividale Nord vecchia Rid Pvot", "Ore": 50.0},
-        {"Ordine": 13, "Canale": "Cò de Vanni 1°", "Ore": 58.0},
-        {"Ordine": 14, "Canale": "Cò de Vanni 2°", "Ore": 180.0},
-        {"Ordine": 15, "Canale": "Cò de Vanni 2° Rid.", "Ore": 35.0},
-        {"Ordine": 16, "Canale": "1° Gruppo bocchette", "Ore": 80.0},
-        {"Ordine": 17, "Canale": "Spineda", "Ore": 30.0},
-        {"Ordine": 18, "Canale": "Spineda Rid.", "Ore": 80.0},
-        {"Ordine": 19, "Canale": "Fornace Rid.", "Ore": 10.0},
-        {"Ordine": 20, "Canale": "S.Fiore 1°", "Ore": 10.0},
-        {"Ordine": 21, "Canale": "S.Fiore 1° Rid.", "Ore": 165.0},
-        {"Ordine": 22, "Canale": "S.Fiore 2°.", "Ore": 30.0},
-        {"Ordine": 23, "Canale": "S.Fiore 2° Rid.", "Ore": 80.0},
-        {"Ordine": 24, "Canale": "Cà de Bottoli rid.", "Ore": 40.0},
-        {"Ordine": 25, "Canale": "Sec.Pomara Rid.", "Ore": 150.0},
-        {"Ordine": 26, "Canale": "Pomara Rid.", "Ore": 35.0},
-        {"Ordine": 27, "Canale": "Orti Rid.", "Ore": 90.0},
-        {"Ordine": 28, "Canale": "S.Pietro", "Ore": 67.0},
-        {"Ordine": 29, "Canale": "S.Pietro Rid.", "Ore": 90.0},
-        {"Ordine": 30, "Canale": "Ossola 1° Rid.", "Ore": 50.0},
-        {"Ordine": 31, "Canale": "Ossola 2° Rid.", "Ore": 40.0},
-        {"Ordine": 32, "Canale": "Agraria Rid.", "Ore": 60.0},
-        {"Ordine": 33, "Canale": "Manzoglio Rid.", "Ore": 80.0},
-        {"Ordine": 34, "Canale": "Fiascale Rid.", "Ore": 120.0},
-        {"Ordine": 35, "Canale": "Tessagli Rid.", "Ore": 90.0},
-        {"Ordine": 36, "Canale": "Roncole Rid.", "Ore": 110.0},
-        {"Ordine": 37, "Canale": "Vaja Rid.", "Ore": 80.0},
-        {"Ordine": 38, "Canale": "Riglio Rid.", "Ore": 140.0},
-        {"Ordine": 39, "Canale": "Breda 3°", "Ore": 37.0},
-        {"Ordine": 40, "Canale": "Breda 4°", "Ore": 19.0},
-        {"Ordine": 41, "Canale": "Delmoncello 1° ridotta", "Ore": 70.0},
-        {"Ordine": 42, "Canale": "Delmoncello 2°", "Ore": 10.0},
-        {"Ordine": 43, "Canale": "Casalmerlino ridotta", "Ore": 20.0},
-        {"Ordine": 44, "Canale": "Bocchette Secondario Casalmerlino", "Ore": 14.0},
-        {"Ordine": 45, "Canale": "Bocchette Secondario Casalmerlino rid", "Ore": 30.0},
-        {"Ordine": 46, "Canale": "Bonfanti", "Ore": 300.0},
-        {"Ordine": 47, "Canale": "Levata", "Ore": 300.0},
+        # I dati di partenza sono letti dalle colonne "Ora di presa" e "Competenza ore"
+        # La data è fissa per la prima ruota, poi l'app calcola i cicli successivi.
+        {"Canale": "Corte Emilia", "Ore": 50.0, "Data_Partenza": "02/05/2026", "Ora_Partenza": "20:00"},
+        {"Canale": "Pirolo", "Ore": 50.0, "Data_Partenza": "04/05/2026", "Ora_Partenza": "22:00"},
+        {"Canale": "Cà Lame", "Ore": 34.0, "Data_Partenza": "07/05/2026", "Ora_Partenza": "00:00"},
+        {"Canale": "Madonna Lame", "Ore": 213.0, "Data_Partenza": "08/05/2026", "Ora_Partenza": "10:00"},
+        {"Canale": "Cividale Nord A", "Ore": 99.0, "Data_Partenza": "25/04/2026", "Ora_Partenza": "07:00"},
+        {"Canale": "Belvedere Nord", "Ore": 41.0, "Data_Partenza": "29/04/2026", "Ora_Partenza": "10:00"},
+        {"Canale": "Cividale Nord vecchia", "Ore": 81.0, "Data_Partenza": "14/04/2026", "Ora_Partenza": "11:00"},
+        {"Canale": "Cò de Vanni 1°", "Ore": 58.0, "Data_Partenza": "23/04/2026", "Ora_Partenza": "02:00"},
+        {"Canale": "1° Gruppo bocchette", "Ore": 80.0, "Data_Partenza": "04/05/2026", "Ora_Partenza": "11:00"},
+        {"Canale": "Spineda", "Ore": 30.0, "Data_Partenza": "07/05/2026", "Ora_Partenza": "19:00"},
+        {"Canale": "Ossola 2° Rid.", "Ore": 40.0, "Data_Partenza": "26/04/2026", "Ora_Partenza": "10:00"},
+        {"Canale": "Agraria Rid.", "Ore": 60.0, "Data_Partenza": "28/04/2026", "Ora_Partenza": "02:00"},
+        {"Canale": "Manzoglio Rid.", "Ore": 80.0, "Data_Partenza": "30/04/2026", "Ora_Partenza": "14:00"},
+        {"Canale": "Fiascale Rid.", "Ore": 120.0, "Data_Partenza": "03/05/2026", "Ora_Partenza": "22:00"},
+        {"Canale": "Tessagli Rid.", "Ore": 90.0, "Data_Partenza": "13/04/2026", "Ora_Partenza": "22:00"},
+        {"Canale": "Roncole Rid.", "Ore": 110.0, "Data_Partenza": "17/04/2026", "Ora_Partenza": "16:00"},
+        {"Canale": "Vaja Rid.", "Ore": 80.0, "Data_Partenza": "22/04/2026", "Ora_Partenza": "06:00"},
+        {"Canale": "Riglio Rid.", "Ore": 140.0, "Data_Partenza": "25/04/2026", "Ora_Partenza": "14:00"},
+        {"Canale": "Breda 3°", "Ore": 37.0, "Data_Partenza": "01/05/2026", "Ora_Partenza": "10:00"},
+        {"Canale": "Breda 4°", "Ore": 19.0, "Data_Partenza": "02/05/2026", "Ora_Partenza": "23:00"},
+        {"Canale": "Delmoncello 1° ridotta", "Ore": 70.0, "Data_Partenza": "03/05/2026", "Ora_Partenza": "18:00"},
     ])
 
 if 'df_canali' not in st.session_state:
@@ -67,68 +42,59 @@ if 'df_canali' not in st.session_state:
 
 # --- Menu Impostazioni ---
 with st.expander("⚙️ Impostazioni", expanded=False):
-    d_inizio = st.date_input("Inizio Stagione:", datetime(2026, 4, 1).date(), format="DD/MM/YYYY")
-    t_inizio = st.time_input("Ora Inizio:", datetime(2026, 4, 1, 8, 0).time())
     d_fine = st.date_input("Fine Stagione:", datetime(2026, 9, 22).date(), format="DD/MM/YYYY")
-    
+    ciclo_giorni = st.number_input("Ogni quanti giorni riparte il ciclo?", min_value=1, value=14)
     if st.button("♻️ Reset Dati"):
         st.session_state.df_canali = get_initial_data()
         st.rerun()
 
-start_stagione = datetime.combine(d_inizio, t_inizio)
-end_stagione = datetime.combine(d_fine, datetime.min.time())
+end_stagione = datetime.combine(d_fine, datetime.max.time())
 
 # --- Tabella Modificabile ---
-with st.expander("📝 Modifica Sequenza e Durate", expanded=False):
+with st.expander("📝 Modifica Partenze e Durate", expanded=False):
     edited_df = st.data_editor(
         st.session_state.df_canali,
         num_rows="dynamic", use_container_width=True, hide_index=True,
         column_config={
-            "Ordine": st.column_config.NumberColumn("Ordine", help="Sequenza di partenza", required=True),
             "Canale": st.column_config.TextColumn("Canale", required=True),
             "Ore": st.column_config.NumberColumn("Ore", required=True),
-            "l/s": st.column_config.NumberColumn("l/s"),
+            "Data_Partenza": st.column_config.TextColumn("Data Prima Partenza", help="Formato GG/MM/AAAA", required=True),
+            "Ora_Partenza": st.column_config.TextColumn("Ora Prima Partenza", help="Formato HH:MM", required=True),
         }
     )
     st.session_state.df_canali = edited_df
 
-# --- Motore di Calcolo a Cascata Unica ---
+# --- Motore di Calcolo Basato su Partenze Specifiche ---
 @st.cache_data
-def calcola_cascata_unica(df_canali, start_dt, end_dt):
+def calcola_turni_da_partenze(df_canali, fine_stagione, giorni_ciclo):
     turni = []
-    df_valid = df_canali.dropna(subset=['Ordine', 'Ore', 'Canale']).copy()
-    # Converte le colonne in numerico, gestendo eventuali errori
-    df_valid['Ordine'] = pd.to_numeric(df_valid['Ordine'], errors='coerce')
-    df_valid['Ore'] = pd.to_numeric(df_valid['Ore'], errors='coerce')
-    df_valid = df_valid.dropna(subset=['Ordine', 'Ore'])
-    df_valid = df_valid.sort_values(by="Ordine")
-
-    if df_valid.empty or df_valid['Ore'].sum() <= 0:
-        return pd.DataFrame()
-
-    # Calcola la durata totale di UN ciclo completo
-    durata_totale_ciclo_ore = df_valid['Ore'].sum()
-    if durata_totale_ciclo_ore == 0: return pd.DataFrame()
-    durata_ciclo_timedelta = timedelta(hours=durata_totale_ciclo_ore)
+    df_valid = df_canali.dropna().copy()
     
-    tempo_corrente = start_dt
-    while tempo_corrente < end_dt:
-        for _, row in df_valid.iterrows():
-            durata = float(row['Ore'])
-            if durata <= 0: continue
+    for _, row in df_valid.iterrows():
+        try:
+            # Tenta di leggere la data e ora di partenza specifiche per questo canale
+            start_dt_primo_ciclo = datetime.strptime(f"{row['Data_Partenza']} {row['Ora_Partenza']}", "%d/%m/%Y %H:%M")
+            durata_ore = float(row['Ore'])
             
-            fine_turno = tempo_corrente + timedelta(hours=durata)
-            if tempo_corrente < end_dt:
+            # Calcola tutti i cicli per questo canale
+            inizio_ciclo_canale = start_dt_primo_ciclo
+            while inizio_ciclo_canale < fine_stagione:
+                fine_turno = inizio_ciclo_canale + timedelta(hours=durata_ore)
                 turni.append({
-                    "Canale": row['Canale'], "Inizio": tempo_corrente, "Fine": min(fine_turno, end_dt)
+                    "Canale": row['Canale'],
+                    "Inizio": inizio_ciclo_canale,
+                    "Fine": fine_turno
                 })
-            tempo_corrente = fine_turno
-            if tempo_corrente >= end_dt: break
-    
+                # Il ciclo successivo per QUESTO canale riparte dopo X giorni
+                inizio_ciclo_canale += timedelta(days=giorni_ciclo)
+        except (ValueError, TypeError):
+            # Salta la riga se la data o l'ora non sono formattate correttamente
+            continue
+            
     return pd.DataFrame(turni)
 
 # --- Visualizzazione Mobile ---
-df_risultato = calcola_cascata_unica(st.session_state.df_canali, start_stagione, end_stagione)
+df_risultato = calcola_turni_da_partenze(st.session_state.df_canali, end_stagione, ciclo_giorni)
 
 st.markdown("---")
 if not df_risultato.empty:
@@ -163,4 +129,4 @@ if not df_risultato.empty:
         csv = df_risultato.to_csv(index=False, date_format='%d/%m/%Y %H:%M').encode('utf-8')
         st.download_button("📥 Scarica Intera Stagione", data=csv, file_name="orari_stagione.csv", mime="text/csv")
 else:
-    st.warning("Nessun dato da calcolare. Controlla le impostazioni.")
+    st.warning("Nessun dato da calcolare. Controlla la tabella delle partenze.")
