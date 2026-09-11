@@ -21,9 +21,10 @@ if 'df_canali' not in st.session_state:
     st.session_state.df_canali = get_initial_data()
 
 with st.expander("⚙️ Impostazioni Stagione", expanded=False):
-    d_inizio = st.date_input("Inizio Stagione:", datetime(2026, 4, 1).date())
+    # Formato europeo GG/MM/AAAA per i calendari
+    d_inizio = st.date_input("Inizio Stagione:", datetime(2026, 4, 1).date(), format="DD/MM/YYYY")
     t_inizio = st.time_input("Ora Inizio:", datetime(2026, 4, 1, 8, 0).time())
-    d_fine = st.date_input("Fine Stagione:", datetime(2026, 9, 22).date())
+    d_fine = st.date_input("Fine Stagione:", datetime(2026, 9, 22).date(), format="DD/MM/YYYY")
     ciclo_giorni = st.number_input("Ciclo (Giorni):", min_value=1, value=14)
     
     if st.button("♻️ Reset Dati Tabella"):
@@ -84,7 +85,8 @@ df_risultato = pd.DataFrame(turni)
 st.markdown("---")
 if not df_risultato.empty:
     st.subheader("📅 Cosa c'è da fare?")
-    giorno_selezionato = st.date_input("Mostra turni per il giorno:", datetime(2026, 4, 1).date())
+    # Calendario per la ricerca con formato europeo
+    giorno_selezionato = st.date_input("Mostra turni per il giorno:", datetime(2026, 4, 1).date(), format="DD/MM/YYYY")
     
     inizio_giorno = datetime.combine(giorno_selezionato, datetime.min.time())
     fine_giorno = inizio_giorno + timedelta(days=1)
@@ -100,8 +102,10 @@ if not df_risultato.empty:
         colori = {1: "#1f77b4", 2: "#ff7f0e", 3: "#2ca02c", 4: "#d62728", 5: "#9467bd"}
         for _, turno in turni_del_giorno.iterrows():
             colore_gruppo = colori.get(turno['Gruppo'] % 5 + 1, "#333")
-            ora_in = turno['Inizio'].strftime('%d/%m ore %H:%M')
-            ora_fi = turno['Fine'].strftime('%d/%m ore %H:%M')
+            
+            # Formattazione data in GG/MM/AA
+            ora_in = turno['Inizio'].strftime('%d/%m/%y ore %H:%M')
+            ora_fi = turno['Fine'].strftime('%d/%m/%y ore %H:%M')
             
             st.markdown(f"""
             <div style="border-left: 8px solid {colore_gruppo}; background-color: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);">
