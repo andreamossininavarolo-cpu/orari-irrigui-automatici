@@ -24,7 +24,7 @@ def formatta_data_it(dt):
     mese = MESI_IT.get(dt.strftime('%B'), dt.strftime('%B'))
     anno = dt.strftime('%y')
     ora = dt.strftime('%H:%M')
-    return f"{giorno_sett} {giorno_num} <b>{mese}</b> '{anno} alle ore {ora}"
+    return f"{giorno_sett} {giorno_num} <b>{mese}</b> '{anno} alle ore <b>{ora}</b>"
 
 # --- Dati Iniziali Estratti dal File Ufficiale PARTENZE 2026.xlsx ---
 def get_initial_data():
@@ -151,15 +151,22 @@ if not df_risultato.empty:
         st.success(f"✅ Nessun canale in funzione il {giorno_selezionato.strftime('%d/%m/%Y')}.")
     else:
         for _, turno in turni_del_giorno.iterrows():
-            # Chiamata alla nuova funzione di formattazione in italiano con i mesi in grassetto
             ora_in = formatta_data_it(turno['Inizio'])
             ora_fi = formatta_data_it(turno['Fine'])
             
+            # Icone cerchio HTML ad alto contrasto e brillantezza
+            pallino_verde = '<span style="display:inline-block; width:15px; height:15px; background-color:#00FF00; border-radius:50%; border:2px solid #005000; margin-right:8px; vertical-align:middle; box-shadow: 0px 0px 4px #00FF00;"></span>'
+            pallino_rosso = '<span style="display:inline-block; width:15px; height:15px; background-color:#FF0000; border-radius:50%; border:2px solid #500000; margin-right:8px; vertical-align:middle; box-shadow: 0px 0px 4px #FF0000;"></span>'
+            
             st.markdown(f"""
             <div style="border-left: 8px solid #1f77b4; background-color: #f0f2f6; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
-                <h3 style="margin: 0 0 10px 0; color: #111;">{turno['Canale']}</h3>
-                <p style="font-size: 1.1em; margin:0;">🟢 <b>Apertura:</b> {ora_in}</p>
-                <p style="font-size: 1.1em; margin:5px 0;">🔴 <b>Chiusura:</b> {ora_fi}</p>
+                <h3 style="margin: 0 0 12px 0; color: #111; font-weight: bold; font-size: 1.3em;">{turno['Canale']}</h3>
+                <p style="font-size: 1.15em; margin: 0 0 8px 0; display: flex; align-items: center;">
+                    {pallino_verde} <span style="vertical-align: middle;"><b>Apertura:</b> {ora_in}</span>
+                </p>
+                <p style="font-size: 1.15em; margin: 0; display: flex; align-items: center;">
+                    {pallino_rosso} <span style="vertical-align: middle;"><b>Chiusura:</b> {ora_fi}</span>
+                </p>
             </div>
             """, unsafe_allow_html=True)
 
