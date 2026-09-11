@@ -5,6 +5,27 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="Turni Navarolo", layout="centered")
 st.title("🌊 Turni Irrigui Storti")
 
+# Dizionari per la traduzione in italiano di giorni e mesi
+GIORNI_IT = {
+    "Monday": "lunedì", "Tuesday": "martedì", "Wednesday": "mercoledì",
+    "Thursday": "giovedì", "Friday": "venerdì", "Saturday": "sabato", "Sunday": "domenica"
+}
+
+MESI_IT = {
+    "January": "gennaio", "February": "febbraio", "March": "marzo", "April": "aprile",
+    "May": "maggio", "June": "giugno", "July": "luglio", "August": "agosto",
+    "September": "settembre", "October": "ottobre", "November": "novembre", "December": "dicembre"
+}
+
+def formatta_data_it(dt):
+    """Formatta la data in italiano con il giorno a parole e il mese in grassetto HTML."""
+    giorno_sett = GIORNI_IT.get(dt.strftime('%A'), dt.strftime('%A'))
+    giorno_num = dt.strftime('%d')
+    mese = MESI_IT.get(dt.strftime('%B'), dt.strftime('%B'))
+    anno = dt.strftime('%y')
+    ora = dt.strftime('%H:%M')
+    return f"{giorno_sett} {giorno_num} <b>{mese}</b> '{anno} alle ore {ora}"
+
 # --- Dati Iniziali Estratti dal File Ufficiale PARTENZE 2026.xlsx ---
 def get_initial_data():
     return pd.DataFrame([
@@ -36,7 +57,6 @@ if 'df_canali' not in st.session_state:
 
 # --- Stato della data selezionata ---
 if 'data_selezionata' not in st.session_state:
-    # Usiamo la data effettiva di oggi come predefinita
     st.session_state.data_selezionata = datetime.now().date()
 
 # --- Menu Impostazioni ---
@@ -112,7 +132,7 @@ if not df_risultato.empty:
             st.session_state.data_selezionata += timedelta(days=1)
             st.rerun()
             
-    # Calendario di controllo (si aggiorna se usi i bottoni)
+    # Calendario di controllo
     giorno_selezionato = st.date_input(
         "Oppure vai a una data specifica:", 
         value=st.session_state.data_selezionata, 
@@ -131,8 +151,9 @@ if not df_risultato.empty:
         st.success(f"✅ Nessun canale in funzione il {giorno_selezionato.strftime('%d/%m/%Y')}.")
     else:
         for _, turno in turni_del_giorno.iterrows():
-            ora_in = turno['Inizio'].strftime('%d/%m ore %H:%M')
-            ora_fi = turno['Fine'].strftime('%d/%m ore %H:%M')
+            # Chiamata alla nuova funzione di formattazione in italiano con i mesi in grassetto
+            ora_in = formatta_data_it(turno['Inizio'])
+            ora_fi = formatta_data_it(turno['Fine'])
             
             st.markdown(f"""
             <div style="border-left: 8px solid #1f77b4; background-color: #f0f2f6; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
