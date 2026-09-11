@@ -2,31 +2,32 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 
+# Impostazione pagina e CSS compatto per cellulare
 st.set_page_config(page_title="Turni Navarolo", layout="centered")
-st.title("🌊 Turni Irrigui Storti")
+st.markdown("""
+<style>
+    h1 { font-size: 1.8em !important; margin-bottom: 0px !important; padding-bottom: 0px !important; }
+    [data-testid="column"] {
+        width: calc(33.333% - 6px) !important;
+        flex: 1 1 calc(33.333% - 6px) !important;
+        min-width: calc(33% - 6px) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+st.title("🌊 Turni Irrigui")
 
-# Dizionari per la traduzione in italiano di giorni e mesi
-GIORNI_IT = {
-    "Monday": "lunedì", "Tuesday": "martedì", "Wednesday": "mercoledì",
-    "Thursday": "giovedì", "Friday": "venerdì", "Saturday": "sabato", "Sunday": "domenica"
-}
-
-MESI_IT = {
-    "January": "gennaio", "February": "febbraio", "March": "marzo", "April": "aprile",
-    "May": "maggio", "June": "giugno", "July": "luglio", "August": "agosto",
-    "September": "settembre", "October": "ottobre", "November": "novembre", "December": "dicembre"
-}
+# Dizionari traduzione
+GIORNI_IT = {"Monday": "lunedì", "Tuesday": "martedì", "Wednesday": "mercoledì", "Thursday": "giovedì", "Friday": "venerdì", "Saturday": "sabato", "Sunday": "domenica"}
+MESI_IT = {"January": "gennaio", "February": "febbraio", "March": "marzo", "April": "aprile", "May": "maggio", "June": "giugno", "July": "luglio", "August": "agosto", "September": "settembre", "October": "ottobre", "November": "novembre", "December": "dicembre"}
 
 def formatta_data_it(dt):
-    """Formatta la data in italiano con il giorno a parole e il mese in grassetto HTML."""
-    giorno_sett = GIORNI_IT.get(dt.strftime('%A'), dt.strftime('%A'))
-    giorno_num = dt.strftime('%d')
+    g_sett = GIORNI_IT.get(dt.strftime('%A'), dt.strftime('%A'))
+    g_num = dt.strftime('%d')
     mese = MESI_IT.get(dt.strftime('%B'), dt.strftime('%B'))
     anno = dt.strftime('%y')
     ora = dt.strftime('%H:%M')
-    return f"{giorno_sett} {giorno_num} <b>{mese}</b> '{anno} alle ore <b>{ora}</b>"
+    return f"{g_sett} {g_num} <b>{mese}</b> '{anno} alle ore <b>{ora}</b>"
 
-# --- Dati Iniziali Estratti dal File Ufficiale PARTENZE 2026.xlsx ---
 def get_initial_data():
     return pd.DataFrame([
         {"Canale": "Corte Emilia", "Ore": 50.0, "Data_Partenza": "02/05/2026", "Ora_Partenza": "20:00"},
@@ -54,12 +55,10 @@ def get_initial_data():
 
 if 'df_canali' not in st.session_state:
     st.session_state.df_canali = get_initial_data()
-
-# --- Stato della data selezionata ---
 if 'data_selezionata' not in st.session_state:
-    st.session_state.data_selezionata = datetime.now().date()
+    st.session_state.data_selezionata = datetime(2026, 5, 2).date() # Giorno Corte Emilia per test comodo
 
-# --- Menu Impostazioni ---
+# Menu Impostazioni
 with st.expander("⚙️ Impostazioni Stagione", expanded=False):
     d_fine = st.date_input("Fine Stagione:", datetime(2026, 9, 22).date(), format="DD/MM/YYYY")
     ciclo_giorni = st.number_input("Ogni quanti giorni riparte il ciclo?", min_value=1, value=14)
@@ -69,43 +68,35 @@ with st.expander("⚙️ Impostazioni Stagione", expanded=False):
 
 end_stagione = datetime.combine(d_fine, datetime.max.time())
 
-# --- Tabella Modificabile ---
+# Tabella Modificabile
 with st.expander("📝 Modifica Partenze e Durate", expanded=False):
     edited_df = st.data_editor(
-        st.session_state.df_canali,
-        num_rows="dynamic", use_container_width=True, hide_index=True,
+        st.session_state.df_canali, num_rows="dynamic", use_container_width=True, hide_index=True,
         column_config={
             "Canale": st.column_config.TextColumn("Canale", required=True),
             "Ore": st.column_config.NumberColumn("Ore", required=True),
-            "Data_Partenza": st.column_config.TextColumn("Data Prima Partenza", help="Formato GG/MM/AAAA", required=True),
-            "Ora_Partenza": st.column_config.TextColumn("Ora Prima Partenza", help="Formato HH:MM", required=True),
+            "Data_Partenza": st.column_config.TextColumn("Data Prima Partenza", help="GG/MM/AAAA", required=True),
+            "Ora_Partenza": st.column_config.TextColumn("Ora Prima Partenza", help="HH:MM", required=True),
         }
     )
     st.session_state.df_canali = edited_df
 
-# --- Motore di Calcolo ---
+# Motore di Calcolo
 @st.cache_data
 def calcola_turni_da_partenze(df_canali, fine_stagione, giorni_ciclo):
     turni = []
     df_valid = df_canali.dropna().copy()
-    
     for _, row in df_valid.iterrows():
         try:
-            start_dt_primo_ciclo = datetime.strptime(f"{row['Data_Partenza']} {row['Ora_Partenza']}", "%d/%m/%Y %H:%M")
+            start_dt = datetime.strptime(f"{row['Data_Partenza']} {row['Ora_Partenza']}", "%d/%m/%Y %H:%M")
             durata_ore = float(row['Ore'])
-            
-            inizio_ciclo_canale = start_dt_primo_ciclo
+            inizio_ciclo_canale = start_dt
             while inizio_ciclo_canale < fine_stagione:
                 fine_turno = inizio_ciclo_canale + timedelta(hours=durata_ore)
-                turni.append({
-                    "Canale": row['Canale'],
-                    "Inizio": inizio_ciclo_canale,
-                    "Fine": fine_turno
-                })
+                turni.append({"Canale": row['Canale'], "Inizio": inizio_ciclo_canale, "Fine": fine_turno})
                 inizio_ciclo_canale += timedelta(days=giorni_ciclo)
-        except (ValueError, TypeError):
+        except:
             continue
-            
     return pd.DataFrame(turni)
 
 df_risultato = calcola_turni_da_partenze(st.session_state.df_canali, end_stagione, ciclo_giorni)
@@ -114,30 +105,23 @@ st.markdown("---")
 if not df_risultato.empty:
     st.subheader("📅 Programma del Giorno")
     
-    # --- PULSANTI DI NAVIGAZIONE RAPIDA ---
+    # PULSANTI DI NAVIGAZIONE RAPIDA IN ORIZZONTALE
     col_ieri, col_oggi, col_domani = st.columns(3)
-    
     with col_ieri:
         if st.button("⬅️ IERI", use_container_width=True):
             st.session_state.data_selezionata -= timedelta(days=1)
             st.rerun()
-            
     with col_oggi:
-        if st.button("📅 OGGI", use_container_width=True):
-            st.session_state.data_selezionata = datetime.now().date()
+        if st.button("📅 OGGI (Test)", use_container_width=True):
+            st.session_state.data_selezionata = datetime(2026, 5, 2).date() # Impostato fisso sul test per comodità
             st.rerun()
-            
     with col_domani:
         if st.button("DOMANI ➡️", use_container_width=True):
             st.session_state.data_selezionata += timedelta(days=1)
             st.rerun()
             
-    # Calendario di controllo
-    giorno_selezionato = st.date_input(
-        "Oppure vai a una data specifica:", 
-        value=st.session_state.data_selezionata, 
-        format="DD/MM/YYYY"
-    )
+    # Calendario compatto
+    giorno_selezionato = st.date_input("Data:", value=st.session_state.data_selezionata, format="DD/MM/YYYY", label_visibility="collapsed")
     st.session_state.data_selezionata = giorno_selezionato
     
     inizio_giorno = datetime.combine(st.session_state.data_selezionata, datetime.min.time())
@@ -154,25 +138,25 @@ if not df_risultato.empty:
             ora_in = formatta_data_it(turno['Inizio'])
             ora_fi = formatta_data_it(turno['Fine'])
             
-            # Icone cerchio HTML ad alto contrasto e brillantezza
+            # Pallini fluorescenti
             pallino_verde = '<span style="display:inline-block; width:15px; height:15px; background-color:#00FF00; border-radius:50%; border:2px solid #005000; margin-right:8px; vertical-align:middle; box-shadow: 0px 0px 4px #00FF00;"></span>'
             pallino_rosso = '<span style="display:inline-block; width:15px; height:15px; background-color:#FF0000; border-radius:50%; border:2px solid #500000; margin-right:8px; vertical-align:middle; box-shadow: 0px 0px 4px #FF0000;"></span>'
             
             st.markdown(f"""
-            <div style="border-left: 8px solid #1f77b4; background-color: #f0f2f6; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
-                <h3 style="margin: 0 0 12px 0; color: #111; font-weight: bold; font-size: 1.3em;">{turno['Canale']}</h3>
-                <p style="font-size: 1.15em; margin: 0 0 8px 0; display: flex; align-items: center;">
-                    {pallino_verde} <span style="vertical-align: middle;"><b>Apertura:</b> {ora_in}</span>
+            <div style="border-left: 8px solid #1f77b4; background-color: #f0f2f6; padding: 12px; margin-bottom: 8px; border-radius: 5px;">
+                <h3 style="margin: 0 0 10px 0; color: #111; font-weight: bold; font-size: 1.25em;">{turno['Canale']}</h3>
+                <p style="font-size: 1.1em; margin: 0 0 6px 0; display: flex; align-items: center;">
+                    {pallino_verde} <span><b>Apertura:</b> {ora_in}</span>
                 </p>
-                <p style="font-size: 1.15em; margin: 0; display: flex; align-items: center;">
-                    {pallino_rosso} <span style="vertical-align: middle;"><b>Chiusura:</b> {ora_fi}</span>
+                <p style="font-size: 1.1em; margin: 0; display: flex; align-items: center;">
+                    {pallino_rosso} <span><b>Chiusura:</b> {ora_fi}</span>
                 </p>
             </div>
             """, unsafe_allow_html=True)
 
-    with st.expander("Dettaglio Completo Stagione (CSV)"):
+    with st.expander("📥 Scarica Tabellone Stagionale (CSV)"):
         st.dataframe(df_risultato.style.format({"Inizio": "{:%d/%m/%Y %H:%M}", "Fine": "{:%d/%m/%Y %H:%M}"}), hide_index=True)
         csv = df_risultato.to_csv(index=False, date_format='%d/%m/%Y %H:%M').encode('utf-8')
-        st.download_button("📥 Scarica Intera Stagione", data=csv, file_name="orari_stagione.csv", mime="text/csv")
+        st.download_button("Scarica CSV", data=csv, file_name="orari_stagione.csv", mime="text/csv")
 else:
     st.warning("Nessun dato da calcolare. Controlla la tabella delle partenze.")
