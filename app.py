@@ -14,7 +14,7 @@ def get_initial_data():
     return pd.DataFrame([
         # I dati di partenza sono letti dalle colonne "Ora di presa" e "Competenza ore"
         # La data è fissa per la prima ruota, poi l'app calcola i cicli successivi.
-        {"Canale": "Corte Emilia", "Ore": 50.0, "Data_Partenza": "02/05/2026", "Ora_Partenza": "20:00"},
+        {"Canale": "Corte 1 Emilia", "Ore": 50.0, "Data_Partenza": "02/05/2026", "Ora_Partenza": "20:00"},
         {"Canale": "Pirolo", "Ore": 50.0, "Data_Partenza": "04/05/2026", "Ora_Partenza": "22:00"},
         {"Canale": "Cà Lame", "Ore": 34.0, "Data_Partenza": "07/05/2026", "Ora_Partenza": "00:00"},
         {"Canale": "Madonna Lame", "Ore": 213.0, "Data_Partenza": "08/05/2026", "Ora_Partenza": "10:00"},
