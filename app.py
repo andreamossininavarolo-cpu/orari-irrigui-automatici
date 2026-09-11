@@ -93,9 +93,21 @@ if not df_risultato.empty:
         hover_data={"Gruppo": True, "Inizio": "|%d/%m %H:%M", "Fine": "|%d/%m %H:%M"}
     )
     
-    fig.update_yaxes(autorange="reversed", title_text="")
+        fig.update_yaxes(autorange="reversed")
     
-    fig.update_layout(
+    # Aggiunge linee verticali, formato data e barra di zoom per cellulare
+    fig.update_xaxes(
+        showgrid=True, 
+        gridwidth=2, 
+        gridcolor='LightGray', 
+        tickformat="%d/%m %H:%M",
+        rangeslider_visible=True
+    )
+    
+    fig.update_layout(height=max(500, len(edited_df['Utenza'].unique()) * 35))
+    
+    st.plotly_chart(fig, use_container_width=True)
+
         height=max(550, len(edited_df['Utenza'].unique()) * 35),
         xaxis=dict(
             title="",
