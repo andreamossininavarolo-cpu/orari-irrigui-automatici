@@ -7,13 +7,7 @@ st.title("🌊 Turni Irrigui Storti")
 
 # --- Dati Iniziali Estratti dal File Ufficiale PARTENZE 2026.xlsx ---
 def get_initial_data():
-    """
-    Questa funzione contiene l'esatto elenco, le durate e le date/ore di partenza
-    della prima ruota, estratte dal file PARTENZE 2026.xlsx.
-    """
     return pd.DataFrame([
-        # I dati di partenza sono letti dalle colonne "Ora di presa" e "Competenza ore"
-        # La data è fissa per la prima ruota, poi l'app calcola i cicli successivi.
         {"Canale": "Corte Emilia", "Ore": 50.0, "Data_Partenza": "02/05/2026", "Ora_Partenza": "20:00"},
         {"Canale": "Pirolo", "Ore": 50.0, "Data_Partenza": "04/05/2026", "Ora_Partenza": "22:00"},
         {"Canale": "Cà Lame", "Ore": 34.0, "Data_Partenza": "07/05/2026", "Ora_Partenza": "00:00"},
@@ -40,11 +34,16 @@ def get_initial_data():
 if 'df_canali' not in st.session_state:
     st.session_state.df_canali = get_initial_data()
 
+# --- Stato della data selezionata ---
+if 'data_selezionata' not in st.session_state:
+    # Usiamo la data effettiva di oggi come predefinita
+    st.session_state.data_selezionata = datetime.now().date()
+
 # --- Menu Impostazioni ---
-with st.expander("⚙️ Impostazioni", expanded=False):
+with st.expander("⚙️ Impostazioni Stagione", expanded=False):
     d_fine = st.date_input("Fine Stagione:", datetime(2026, 9, 22).date(), format="DD/MM/YYYY")
     ciclo_giorni = st.number_input("Ogni quanti giorni riparte il ciclo?", min_value=1, value=14)
-    if st.button("♻️ Reset Dati"):
+    if st.button("♻️ Reset Dati Tabella"):
         st.session_state.df_canali = get_initial_data()
         st.rerun()
 
@@ -64,7 +63,7 @@ with st.expander("📝 Modifica Partenze e Durate", expanded=False):
     )
     st.session_state.df_canali = edited_df
 
-# --- Motore di Calcolo Basato su Partenze Specifiche ---
+# --- Motore di Calcolo ---
 @st.cache_data
 def calcola_turni_da_partenze(df_canali, fine_stagione, giorni_ciclo):
     turni = []
@@ -72,11 +71,9 @@ def calcola_turni_da_partenze(df_canali, fine_stagione, giorni_ciclo):
     
     for _, row in df_valid.iterrows():
         try:
-            # Tenta di leggere la data e ora di partenza specifiche per questo canale
             start_dt_primo_ciclo = datetime.strptime(f"{row['Data_Partenza']} {row['Ora_Partenza']}", "%d/%m/%Y %H:%M")
             durata_ore = float(row['Ore'])
             
-            # Calcola tutti i cicli per questo canale
             inizio_ciclo_canale = start_dt_primo_ciclo
             while inizio_ciclo_canale < fine_stagione:
                 fine_turno = inizio_ciclo_canale + timedelta(hours=durata_ore)
@@ -85,24 +82,45 @@ def calcola_turni_da_partenze(df_canali, fine_stagione, giorni_ciclo):
                     "Inizio": inizio_ciclo_canale,
                     "Fine": fine_turno
                 })
-                # Il ciclo successivo per QUESTO canale riparte dopo X giorni
                 inizio_ciclo_canale += timedelta(days=giorni_ciclo)
         except (ValueError, TypeError):
-            # Salta la riga se la data o l'ora non sono formattate correttamente
             continue
             
     return pd.DataFrame(turni)
 
-# --- Visualizzazione Mobile ---
 df_risultato = calcola_turni_da_partenze(st.session_state.df_canali, end_stagione, ciclo_giorni)
 
 st.markdown("---")
 if not df_risultato.empty:
     st.subheader("📅 Programma del Giorno")
     
-    giorno_selezionato = st.date_input("Mostra turni per il giorno:", datetime.now().date(), format="DD/MM/YYYY")
+    # --- PULSANTI DI NAVIGAZIONE RAPIDA ---
+    col_ieri, col_oggi, col_domani = st.columns(3)
     
-    inizio_giorno = datetime.combine(giorno_selezionato, datetime.min.time())
+    with col_ieri:
+        if st.button("⬅️ IERI", use_container_width=True):
+            st.session_state.data_selezionata -= timedelta(days=1)
+            st.rerun()
+            
+    with col_oggi:
+        if st.button("📅 OGGI", use_container_width=True):
+            st.session_state.data_selezionata = datetime.now().date()
+            st.rerun()
+            
+    with col_domani:
+        if st.button("DOMANI ➡️", use_container_width=True):
+            st.session_state.data_selezionata += timedelta(days=1)
+            st.rerun()
+            
+    # Calendario di controllo (si aggiorna se usi i bottoni)
+    giorno_selezionato = st.date_input(
+        "Oppure vai a una data specifica:", 
+        value=st.session_state.data_selezionata, 
+        format="DD/MM/YYYY"
+    )
+    st.session_state.data_selezionata = giorno_selezionato
+    
+    inizio_giorno = datetime.combine(st.session_state.data_selezionata, datetime.min.time())
     fine_giorno = inizio_giorno + timedelta(days=1)
     
     turni_del_giorno = df_risultato[
@@ -110,7 +128,7 @@ if not df_risultato.empty:
     ].sort_values(by='Inizio')
     
     if turni_del_giorno.empty:
-        st.success("✅ Nessun canale in funzione in questa data.")
+        st.success(f"✅ Nessun canale in funzione il {giorno_selezionato.strftime('%d/%m/%Y')}.")
     else:
         for _, turno in turni_del_giorno.iterrows():
             ora_in = turno['Inizio'].strftime('%d/%m ore %H:%M')
