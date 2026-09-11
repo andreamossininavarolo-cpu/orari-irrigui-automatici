@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-import plotly.express as px
 
-st.set_page_config(page_title="Turni Navarolo", layout="wide")
+st.set_page_config(page_title="Turni Navarolo", layout="centered")
 st.title("🌊 Turni Irrigui")
 
-# --- Dati Iniziali ---
 def get_initial_data():
     return pd.DataFrame([
         {"Gr.": 1, "Canale": "Corte Emilia", "Ore": 24.0, "l/s": 120},
@@ -22,37 +20,35 @@ def get_initial_data():
 if 'df_canali' not in st.session_state:
     st.session_state.df_canali = get_initial_data()
 
-# --- Menu Laterale ---
-st.sidebar.header("⚙️ Impostazioni")
-d_inizio = st.sidebar.date_input("Inizio:", datetime(2026, 4, 1).date())
-t_inizio = st.sidebar.time_input("Ora:", datetime(2026, 4, 1, 8, 0).time())
-d_fine = st.sidebar.date_input("Fine:", datetime(2026, 9, 22).date())
-ciclo_giorni = st.sidebar.number_input("Ciclo (Giorni):", min_value=1, value=14)
+with st.expander("⚙️ Impostazioni Stagione", expanded=False):
+    d_inizio = st.date_input("Inizio Stagione:", datetime(2026, 4, 1).date())
+    t_inizio = st.time_input("Ora Inizio:", datetime(2026, 4, 1, 8, 0).time())
+    d_fine = st.date_input("Fine Stagione:", datetime(2026, 9, 22).date())
+    ciclo_giorni = st.number_input("Ciclo (Giorni):", min_value=1, value=14)
+    
+    if st.button("♻️ Reset Dati Tabella"):
+        st.session_state.df_canali = get_initial_data()
+        st.rerun()
 
 start_stagione = datetime.combine(d_inizio, t_inizio)
 end_stagione = datetime.combine(d_fine, datetime.min.time())
 
-if st.sidebar.button("♻️ Reset Dati"):
-    st.session_state.df_canali = get_initial_data()
-    st.rerun()
+with st.expander("📝 Modifica Canali e Durate", expanded=False):
+    edited_df = st.data_editor(
+        st.session_state.df_canali,
+        num_rows="dynamic",
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Gr.": st.column_config.NumberColumn("Gr.", min_value=1, step=1, required=True),
+            "Canale": st.column_config.TextColumn("Canale", required=True),
+            "Ore": st.column_config.NumberColumn("Ore", min_value=0.1, step=0.5, format="%.1f", required=True),
+            "l/s": st.column_config.NumberColumn("l/s"),
+        }
+    )
+    st.session_state.df_canali = edited_df
 
-# --- Tabella Interattiva Mobile-Friendly ---
-st.subheader("📝 Modifica Canali")
-edited_df = st.data_editor(
-    st.session_state.df_canali,
-    num_rows="dynamic",
-    use_container_width=True,
-    hide_index=True, # Nasconde i numeri di riga per salvare spazio!
-    column_config={
-        "Gr.": st.column_config.NumberColumn("Gr.", min_value=1, step=1, width="small", required=True),
-        "Canale": st.column_config.TextColumn("Canale", width="medium", required=True),
-        "Ore": st.column_config.NumberColumn("Ore", min_value=0.1, step=0.5, format="%.1f", width="small", required=True),
-        "l/s": st.column_config.NumberColumn("l/s", width="small"),
-    }
-)
-st.session_state.df_canali = edited_df
-
-# --- Calcolo Turnazione ---
+# Calcolo turni
 turni = []
 if not edited_df.empty and 'Gr.' in edited_df.columns:
     df_valid = edited_df.dropna(subset=['Gr.', 'Ore']).copy()
@@ -74,7 +70,7 @@ if not edited_df.empty and 'Gr.' in edited_df.columns:
                     
                     if corrente < end_stagione:
                         turni.append({
-                            "Gruppo": f"Gr. {int(g)}",
+                            "Gruppo": int(g),
                             "Canale": row['Canale'],
                             "Inizio": corrente,
                             "Fine": min(fine_turno, end_stagione),
@@ -85,55 +81,39 @@ if not edited_df.empty and 'Gr.' in edited_df.columns:
 
 df_risultato = pd.DataFrame(turni)
 
-# --- Visualizzazione ---
 st.markdown("---")
 if not df_risultato.empty:
-    st.subheader("📊 Grafico (Usa 2 dita per zoomare)")
+    st.subheader("📅 Cosa c'è da fare?")
+    giorno_selezionato = st.date_input("Mostra turni per il giorno:", datetime(2026, 4, 1).date())
     
-    fig = px.timeline(
-        df_risultato, 
-        x_start="Inizio", 
-        x_end="Fine", 
-        y="Canale", 
-        color="Gruppo",
-        hover_data={"Gruppo": True, "Inizio": "|%d/%m %H:%M", "Fine": "|%d/%m %H:%M"}
-    )
+    inizio_giorno = datetime.combine(giorno_selezionato, datetime.min.time())
+    fine_giorno = inizio_giorno + timedelta(days=1)
     
-    fig.update_yaxes(autorange="reversed", title_text="", tickfont=dict(size=10))
+    # Prendi solo i turni che si accavallano con la data scelta
+    turni_del_giorno = df_risultato[
+        (df_risultato['Inizio'] < fine_giorno) & (df_risultato['Fine'] > inizio_giorno)
+    ].sort_values(by=['Gruppo', 'Inizio'])
     
-    # Ottimizzazioni Asse X per Mobile
-    fig.update_xaxes(
-        showgrid=True, 
-        gridwidth=1, 
-        gridcolor='LightGray', 
-        tickformat="%d/%m", # Formato data più corto
-        tickangle=-45,      # Inclina le date per non sovrapporle
-        rangeslider_visible=False # Su mobile usiamo il Pinch-to-Zoom (due dita)
-    )
-    
-    fig.update_layout(
-        height=max(400, len(edited_df['Canale'].unique()) * 45),
-        margin=dict(t=10, b=10, l=0, r=0), # Margini azzerati ai lati
-        legend=dict(
-            orientation="h", # Legenda orizzontale
-            yanchor="bottom",
-            y=1.02,
-            xanchor="center",
-            x=0.5,
-            title=""
-        )
-    )
-    # Nascondiamo la fastidiosa barra degli strumenti fluttuante
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    if turni_del_giorno.empty:
+        st.success("🎉 Nessun canale aperto in questa data!")
+    else:
+        colori = {1: "#1f77b4", 2: "#ff7f0e", 3: "#2ca02c", 4: "#d62728", 5: "#9467bd"}
+        for _, turno in turni_del_giorno.iterrows():
+            colore_gruppo = colori.get(turno['Gruppo'] % 5 + 1, "#333")
+            ora_in = turno['Inizio'].strftime('%d/%m ore %H:%M')
+            ora_fi = turno['Fine'].strftime('%d/%m ore %H:%M')
+            
+            st.markdown(f"""
+            <div style="border-left: 8px solid {colore_gruppo}; background-color: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);">
+                <h3 style="margin-top: 0; color: #333;">{turno['Canale']}</h3>
+                <p style="margin: 5px 0; font-size: 16px;">🟢 <b>Apertura:</b> {ora_in}</p>
+                <p style="margin: 5px 0; font-size: 16px;">🔴 <b>Chiusura:</b> {ora_fi}</p>
+                <p style="margin: 5px 0; font-size: 14px; color: #666;">Gruppo: {turno['Gruppo']} | Portata: {turno['l/s']} l/s</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-    st.subheader("📅 Orari")
-    df_show = df_risultato.copy()
-    # Formato più compatto anche per la tabella finale
-    df_show["Inizio"] = df_show["Inizio"].dt.strftime('%d/%m %H:%M')
-    df_show["Fine"] = df_show["Fine"].dt.strftime('%d/%m %H:%M')
-    st.dataframe(df_show, use_container_width=True, hide_index=True)
-
+    st.markdown("---")
     csv = df_risultato.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Scarica CSV", data=csv, file_name="orari.csv", mime="text/csv")
+    st.download_button("📥 Scarica Intera Stagione (CSV)", data=csv, file_name="orari_stagione.csv", mime="text/csv")
 else:
-    st.warning("Inserisci dati validi per generare il programma.")
+    st.warning("Inserisci i dati nei menu in alto.")
